@@ -1,218 +1,280 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[codz]
-*$py.class
+import random
+import time
 
-# C extensions
-*.so
+def print_slow(text, delay=0.025):
+    for char in text:
+        print(char, end='', flush=True)
+        time.sleep(delay)
+    print()
 
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
+def spin_roulette():
+    number = random.randint(0, 36)
+    if number == 0:
+        color = "зелёное"
+    elif number in [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]:
+        color = "красное"
+    else:
+        color = "чёрное"
+    return number, color
 
-# PyInstaller
-#   Usually these files are written by a python script from a template
-#   before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
+def play_roulette(balance):
+    print("\n=== РУЛЕТКА ===")
+    print("1. Ставка на цвет (красное/чёрное) — x2")
+    print("2. Ставка на число (0-36) — x35")
+    print("3. Назад")
 
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
+    choice = input("Выбор: ").strip()
+    if choice == "3":
+        return balance
 
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py.cover
-.hypothesis/
-.pytest_cache/
-cover/
+    if choice not in ["1", "2"]:
+        print("Нормально выбери, блять.")
+        return balance
 
-# Translations
-*.mo
-*.pot
+    try:
+        bet = int(input("Сколько ставишь?: "))
+    except ValueError:
+        print("Число вводи.")
+        return balance
 
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
+    if bet <= 0 or bet > balance:
+        print("Некорректная ставка.")
+        return balance
 
-# Flask stuff:
-instance/
-.webassets-cache
+    if choice == "1":
+        color_bet = input("Цвет (красное/чёрное): ").strip().lower()
+        if color_bet not in ["красное", "чёрное"]:
+            print("Только красное или чёрное.")
+            return balance
 
-# Scrapy stuff:
-.scrapy
+        print_slow("Крутим...")
+        time.sleep(1)
+        number, color = spin_roulette()
+        print(f"Выпало: {number} ({color})")
 
-# Sphinx documentation
-docs/_build/
+        if color == color_bet:
+            balance += bet
+            print_slow(f"🎉 Забрал {bet * 2}!")
+        else:
+            balance -= bet
+            print_slow("Проёб.")
 
-# PyBuilder
-.pybuilder/
-target/
+    else:
+        try:
+            number_bet = int(input("Число (0-36): "))
+        except ValueError:
+            print("Число.")
+            return balance
+        if not 0 <= number_bet <= 36:
+            print("От 0 до 36.")
+            return balance
 
-# Jupyter Notebook
-.ipynb_checkpoints
+        print_slow("Крутим...")
+        time.sleep(1)
+        number, color = spin_roulette()
+        print(f"Выпало: {number} ({color})")
 
-# IPython
-profile_default/
-ipython_config.py
+        if number == number_bet:
+            win = bet * 35
+            balance += win
+            print_slow(f"🔥 УГАДАЛ ЧИСЛО! +{win}")
+        else:
+            balance -= bet
+            print_slow("Мимо.")
 
-# pyenv
-#   For a library or package, you might want to ignore these files since the code is
-#   intended to run in multiple environments; otherwise, check them in:
-# .python-version
+    return balance
 
-# pipenv
-#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
-#   However, in case of collaboration, if having platform-specific dependencies or dependencies
-#   having no cross-platform support, pipenv may install dependencies that don't work, or not
-#   install all needed dependencies.
-# Pipfile.lock
+def create_deck():
+    ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
+    suits = ['♠', '♥', '♦', '♣']
+    deck = [f"{r}{s}" for r in ranks for s in suits]
+    random.shuffle(deck)
+    return deck
 
-# UV
-#   Similar to Pipfile.lock, it is generally recommended to include uv.lock in version control.
-#   This is especially recommended for binary packages to ensure reproducibility, and is more
-#   commonly ignored for libraries.
-# uv.lock
+def card_value(card):
+    rank = card[:-1]
+    if rank in ['J', 'Q', 'K']:
+        return 10
+    if rank == 'A':
+        return 11
+    return int(rank)
 
-# poetry
-#   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
-#   This is especially recommended for binary packages to ensure reproducibility, and is more
-#   commonly ignored for libraries.
-#   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
-# poetry.lock
-# poetry.toml
+def hand_value(hand):
+    value = sum(card_value(c) for c in hand)
+    aces = sum(1 for c in hand if c.startswith('A'))
+    while value > 21 and aces:
+        value -= 10
+        aces -= 1
+    return value
 
-# pdm
-#   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
-#   pdm recommends including project-wide configuration in pdm.toml, but excluding .pdm-python.
-#   https://pdm-project.org/en/latest/usage/project/#working-with-version-control
-# pdm.lock
-# pdm.toml
-.pdm-python
-.pdm-build/
+def show_hand(hand, hide_first=False):
+    if hide_first:
+        return f"[скрыта] {' '.join(hand[1:])}"
+    return ' '.join(hand)
 
-# pixi
-#   Similar to Pipfile.lock, it is generally recommended to include pixi.lock in version control.
-# pixi.lock
-#   Pixi creates a virtual environment in the .pixi directory, just like venv module creates one
-#   in the .venv directory. It is recommended not to include this directory in version control.
-.pixi
+def play_blackjack(balance):
+    print("\n=== БЛЭКДЖЕК (21) ===")
+    try:
+        bet = int(input("Ставка: "))
+    except ValueError:
+        print("Число, брат.")
+        return balance
 
-# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
-__pypackages__/
+    if bet <= 0 or bet > balance:
+        print("Некорректная ставка.")
+        return balance
 
-# Celery stuff
-celerybeat-schedule
-celerybeat.pid
+    deck = create_deck()
+    player = [deck.pop(), deck.pop()]
+    dealer = [deck.pop(), deck.pop()]
 
-# Redis
-*.rdb
-*.aof
-*.pid
+    print(f"\nТвои карты: {show_hand(player)}  (сумма: {hand_value(player)})")
+    print(f"Дилер: {show_hand(dealer, hide_first=True)}")
 
-# RabbitMQ
-mnesia/
-rabbitmq/
-rabbitmq-data/
+    if hand_value(player) == 21:
+        print_slow("БЛЭКДЖЕК!")
+        if hand_value(dealer) == 21:
+            print("И у дилера тоже. Ничья.")
+            return balance
+        else:
+            win = int(bet * 1.5)
+            balance += win
+            print_slow(f"Забрал {bet + win} (x2.5)")
+            return balance
 
-# ActiveMQ
-activemq-data/
+    while True:
+        action = input("\n(h)ит / (s)tand: ").strip().lower()
+        if action == 'h':
+            player.append(deck.pop())
+            print(f"Ты взял: {player[-1]}")
+            print(f"Твои карты: {show_hand(player)}  (сумма: {hand_value(player)})")
+            if hand_value(player) > 21:
+                print_slow("Перебор, блять. Проиграл.")
+                return balance - bet
+            if hand_value(player) == 21:
+                break
+        elif action == 's':
+            break
+        else:
+            print("h или s, не выёбывайся.")
 
-# SageMath parsed files
-*.sage.py
+    print(f"\nДилер открывается: {show_hand(dealer)}  (сумма: {hand_value(dealer)})")
+    while hand_value(dealer) < 17:
+        dealer.append(deck.pop())
+        print(f"Дилер берёт: {dealer[-1]}  → {hand_value(dealer)}")
+        time.sleep(0.7)
 
-# Environments
-.env
-.envrc
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
+    player_score = hand_value(player)
+    dealer_score = hand_value(dealer)
 
-# Spyder project settings
-.spyderproject
-.spyproject
+    print(f"\nИтог: ты {player_score} | дилер {dealer_score}")
 
-# Rope project settings
-.ropeproject
+    if dealer_score > 21:
+        balance += bet
+        print_slow("Дилер перебрал! Ты выиграл.")
+    elif player_score > dealer_score:
+        balance += bet
+        print_slow("Победа!")
+    elif player_score < dealer_score:
+        balance -= bet
+        print_slow("Дилер сильнее. Проёб.")
+    else:
+        print_slow("Ничья. Ставка вернулась.")
 
-# mkdocs documentation
-/site
+    return balance
 
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
+def take_loan(balance, debt):
+    print(f"\n=== ЗАЙМ ===")
+    print(f"Текущий долг: {debt}")
+    print("Можно взять до 2000 за раз.")
+    try:
+        amount = int(input("Сколько берёшь?: "))
+    except ValueError:
+        print("Число.")
+        return balance, debt
 
-# Pyre type checker
-.pyre/
+    if amount <= 0:
+        print("Нормально введи.")
+        return balance, debt
+    if amount > 2000:
+        print("Максимум 2000 за раз, не борзей.")
+        return balance, debt
 
-# pytype static type analyzer
-.pytype/
+    balance += amount
+    debt += amount
+    print_slow(f"Взял {amount}. Теперь долг: {debt}. Не забудь вернуть, а то пиздец.")
+    return balance, debt
 
-# Cython debug symbols
-cython_debug/
+def repay_loan(balance, debt):
+    if debt == 0:
+        print("Долга нет, красава.")
+        return balance, debt
 
-# PyCharm
-#   JetBrains specific template is maintained in a separate JetBrains.gitignore that can
-#   be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
-#   and can be added to the global gitignore or merged into this file.  For a more nuclear
-#   option (not recommended) you can uncomment the following to ignore the entire idea folder.
-# .idea/
+    print(f"\nДолг: {debt} | Баланс: {balance}")
+    try:
+        amount = int(input("Сколько возвращаешь?: "))
+    except ValueError:
+        print("Число.")
+        return balance, debt
 
-# Abstra
-#   Abstra is an AI-powered process automation framework.
-#   Ignore directories containing user credentials, local state, and settings.
-#   Learn more at https://abstra.io/docs
-.abstra/
+    if amount <= 0:
+        print("Нормально.")
+        return balance, debt
+    if amount > balance:
+        print("Не хватает бабок.")
+        return balance, debt
+    if amount > debt:
+        amount = debt
 
-# Visual Studio Code
-#   Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore 
-#   that can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
-#   and can be added to the global gitignore or merged into this file. However, if you prefer, 
-#   you could uncomment the following to ignore the entire vscode folder
-# .vscode/
-# Temporary file for partial code execution
-tempCodeRunnerFile.py
+    balance -= amount
+    debt -= amount
+    print_slow(f"Вернул {amount}. Осталось долга: {debt}")
+    return balance, debt
 
-# Ruff stuff:
-.ruff_cache/
+def main():
+    balance = 1000
+    debt = 0
 
-# PyPI configuration file
-.pypirc
+    print_slow("🎰 Добро пожаловать в казино, брат!")
+    print_slow("Стартовый капитал: 1000. Можно брать в долг, но потом отдавать придётся.\n")
 
-# Marimo
-marimo/_static/
-marimo/_lsp/
-__marimo__/
+    while True:
+        print(f"\n{'='*40}")
+        print(f"💰 Баланс: {balance}   |   💳 Долг: {debt}")
+        print("="*40)
+        print("1. Рулетка")
+        print("2. Блэкджек (21)")
+        print("3. Взять займ")
+        print("4. Погасить долг")
+        print("5. Свалить")
 
-# Streamlit
-.streamlit/secrets.toml
+        choice = input("\nВыбор: ").strip()
+
+        if choice == "1":
+            balance = play_roulette(balance)
+        elif choice == "2":
+            balance = play_blackjack(balance)
+        elif choice == "3":
+            balance, debt = take_loan(balance, debt)
+        elif choice == "4":
+            balance, debt = repay_loan(balance, debt)
+        elif choice == "5":
+            if debt > 0:
+                print_slow(f"У тебя долг {debt}. Казино тебя найдёт, не ссы.")
+            print_slow(f"Уходишь с {balance} на руках. Пока.")
+            break
+        else:
+            print("1-5, блять.")
+
+        if balance <= 0 and debt == 0:
+            print_slow("\n💸 Всё, ты в ноль. Казино тебя сожрало.")
+            break
+        if balance <= 0 and debt > 0:
+            print_slow(f"\n💸 Денег нет, а долг {debt}. Теперь ты ещё и в минусе. Жесть.")
+            cont = input("Взять ещё займ и продолжить? (да/нет): ").strip().lower()
+            if cont != "да":
+                print_slow("Всё, конец. Иди работай.")
+                break
+
+if __name__ == "__main__":
+    main()
